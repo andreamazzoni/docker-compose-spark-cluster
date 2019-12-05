@@ -1,0 +1,78 @@
+version: '3.5'
+
+services:
+
+  master:
+    container_name: master.${DOMAIN_NAME}
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: spark-node:latest
+    command: "master"
+    ports:
+      - 8080:8080
+      - 8081:8081
+      - 7077:7077
+      - 6066:6066
+    networks:
+      spark-network:
+        ipv4_address: 192.168.0.100
+    hostname: master
+    domainname: ${DOMAIN_NAME}
+    volumes:
+      - spark-data:/home/spark
+
+  slave01:
+    container_name: slave01.${DOMAIN_NAME}
+    image: spark-node:latest
+    command: "slave"
+    networks:
+      spark-network:
+        ipv4_address: 192.168.0.101
+    hostname: slave01
+    domainname: ${DOMAIN_NAME}
+    volumes:
+      - spark-data:/home/spark
+
+  slave02:
+    container_name: slave02.${DOMAIN_NAME}
+    image: spark-node:latest
+    command: "slave"
+    networks:
+      spark-network:
+        ipv4_address: 192.168.0.102
+    hostname: slave02
+    domainname: ${DOMAIN_NAME}
+    volumes:
+      - spark-data:/home/spark
+
+  jupyter:
+    image: jupyter/pyspark-notebook
+    container_name: jupyter.${DOMAIN_NAME}
+    hostname: jupyter
+    domainname: ${DOMAIN_NAME}
+    user: root
+    networks:
+      spark-network:
+        ipv4_address: 192.168.0.103
+    ports:
+      - 8888:8888
+      - 4040:4040
+    environment:
+      - NB_USER=spark
+      - NB_UID=1000
+      - NB_GID=1000
+      - NB_GROUP=spark
+    volumes:
+      - spark-data:/home/spark
+
+networks:
+  spark-network:
+    name: spark-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.0.0/24
+
+volumes:
+  spark-data:
